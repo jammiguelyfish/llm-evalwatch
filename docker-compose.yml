@@ -1,0 +1,56 @@
+# evalwatch re-runs the suite on a schedule; Prometheus scrapes it; Grafana
+# shows the history. Ports are bound to localhost because Grafana ships with a
+# default admin password.
+#
+# The model runs in Ollama on the host (not in this stack), reached through
+# host.docker.internal. Change MODEL / PROVIDER below to evaluate something else.
+services:
+  evalwatch:
+    build: .
+    command:
+      - serve
+      - -suite=/suites/basics.json
+      - -provider=${PROVIDER:-ollama}
+      - -url=${PROVIDER_URL:-http://host.docker.internal:11434}
+      - -model=${MODEL:-qwen2.5:1.5b-instruct}
+      - -data=/data
+      - -addr=:8080
+      - -every=${EVERY:-15m}
+    environment:
+      - OPENAI_API_KEY
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - evalwatch-data:/data
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    volumes:
+      - ./deploy/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+    depends_on:
+      - evalwatch
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+    volumes:
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./deploy/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  evalwatch-data:
+  prometheus-data:

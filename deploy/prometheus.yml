@@ -1,0 +1,13 @@
+global:
+  scrape_interval: 30s
+
+scrape_configs:
+  - job_name: evalwatch
+    static_configs:
+      - targets: ["evalwatch:8080"]
+
+# Example alert: page when the latest run fails a case that used to pass.
+# (Add a rule_files entry and an Alertmanager to use it.)
+#   - alert: EvalPassRateDropped
+#     expr: evalwatch_pass_rate < 0.9
+#     for: 5m

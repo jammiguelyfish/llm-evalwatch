@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - name: gofmt
+        run: test -z "$(gofmt -l .)"
+      - run: go vet ./...
+      - run: go test -race ./...
+      - run: go build ./cmd/evalwatch
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate the Compose file
+        run: docker compose config --quiet
+      - name: Build the image
+        run: docker build -t evalwatch .
+      - name: Image starts and serves metrics
+        run: |
+          docker run -d --name ew -p 8080:8080 evalwatch serve -suite=/suites/basics.json -model=any -data=/data -addr=:8080
+          for i in $(seq 1 20); do curl -sf localhost:8080/healthz && break || sleep 1; done
+          curl -sf localhost:8080/metrics | grep -q "# TYPE evalwatch_pass_rate gauge"
