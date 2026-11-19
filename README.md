@@ -99,7 +99,11 @@ docker compose up --build
 
 The model stays in Ollama on the host (reached via `host.docker.internal`), so the stack needs no GPU. Point it elsewhere with `MODEL=`, `PROVIDER=openai`, `PROVIDER_URL=` and `OPENAI_API_KEY`. Ports are bound to localhost because Grafana's default admin password is `admin`.
 
-> CI validates the Compose file and checks that the evalwatch image builds, starts and serves `/healthz` and `/metrics`. I have not run the full stack (Prometheus and Grafana) end to end, and the Grafana dashboard in `deploy/grafana/dashboards/evalwatch.json` was written by hand and not checked against live data. Expect to adjust panels.
+![Grafana dashboard](docs/images/dashboard.png)
+
+*The provisioned dashboard a few minutes after `docker compose up`, with the model running in Ollama on the host (hence the short lines: only a couple of runs so far).*
+
+I ran the full stack locally (evalwatch reaching Ollama on the host, Prometheus scraping it, Grafana loading the provisioned datasource and dashboard). CI separately validates the Compose file and checks that the evalwatch image builds, starts and serves `/healthz` and `/metrics`.
 
 ## Writing a suite
 

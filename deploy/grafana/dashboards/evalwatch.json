@@ -65,7 +65,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
       "targets": [
-        { "refId": "A", "expr": "evalwatch_latency_seconds{model=~\"$model\"}", "legendFormat": "{{model}} p{{quantile}}" }
+        { "refId": "A", "expr": "evalwatch_latency_seconds{model=~\"$model\"}", "legendFormat": "{{model}} (quantile {{quantile}})" }
       ]
     },
     {
