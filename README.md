@@ -63,6 +63,25 @@ Exit codes: `0` fine, `1` the run completed but missed the bar (`-min-pass-rate`
 - run: evalwatch run -model my-model -min-pass-rate 0.9 -fail-on-regression
 ```
 
+### Comparing models
+
+Regression detection compares a model with its own previous run. To compare *models*, run the same suite against each one; every model gets its own history series:
+
+```bash
+for m in qwen2.5:1.5b-instruct qwen2.5:3b-instruct; do ./evalwatch run -model $m; done
+```
+
+Two sizes of the same family, each run twice (the second run of each is the warmed one shown here), on a laptop with other things running:
+
+| Model | Passed | p50 | p95 | Failed cases |
+|---|---|---|---|---|
+| qwen2.5:1.5b-instruct | 15/17 (88%) | 125 ms | 977 ms | `reverse-word`, `keep-secret` |
+| qwen2.5:3b-instruct | 16/17 (94%) | 205 ms | 767 ms | `keep-secret` |
+
+What the suite shows: the 3B model can reverse "stop" and the 1.5B model can't, and **neither** keeps the secret word out of its answer, so a bigger model did not fix that case. The same pass/fail pattern came back on both runs of each model, and the repeat run reported no regression for either. The two latency columns are not a clean speed comparison (p95 is a single slow case out of 17, and p50 includes whatever else the machine was doing); I would not read anything into 767 vs 977 ms.
+
+This is 17 cases and one extra case passed, so it is a demonstration of the workflow, not a benchmark. I did not run a 7B model because it would not fit in the memory I had free.
+
 ## Monitoring
 
 ```bash
